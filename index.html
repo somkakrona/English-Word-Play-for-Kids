@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Words Study for Kids — English Learning Game Prototype v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky: #BFEBFF;
+    --sky-deep: #8FD8FF;
+    --card: #FFFFFF;
+    --ink: #2B2140;
+    --purple: #7C5CFC;
+    --purple-dark: #5E3FE0;
+    --coral: #FF6F61;
+    --yellow: #FFD166;
+    --green: #63C77B;
+    --pink: #FF8FB3;
+    --shadow: rgba(43,33,64,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Nunito', sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.6), transparent 40%),
+      linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 100%);
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative;
+  }
+  .stage{
+    width:100%; max-width:480px; height:100vh; max-height:850px;
+    position:relative; display:flex; flex-direction:column; padding:16px;
+  }
+  h1,h2,h3{font-family:'Baloo 2', cursive; margin:0; color:var(--ink);}
+  .screen{display:none; flex-direction:column; height:100%; width:100%; overflow-y:auto;}
+  .screen.active{display:flex;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* ---- Map screen ---- */
+  .map-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .map-header h1{font-size:24px; color:var(--purple-dark);}
+  .header-right{display:flex; gap:8px;}
+  .pill-btn{
+    background:var(--card); border:none; border-radius:999px; padding:6px 12px;
+    font-family:'Baloo 2'; font-weight:700; box-shadow:0 4px 0 var(--shadow);
+    display:flex; align-items:center; gap:5px; font-size:14px; cursor:pointer;
+  }
+  .mascot-intro{
+    display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.6);
+    border-radius:18px; padding:8px 12px; margin-bottom:8px; font-weight:700; color:var(--ink); font-size:13px;
+  }
+  .islands{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:6px 2px 14px;}
+  .island{
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
+    background:var(--card); border-radius:20px; padding:14px 10px;
+    box-shadow:0 6px 0 var(--shadow); cursor:pointer; transition:transform .12s ease;
+  }
+  .island:active{transform:translateY(4px); box-shadow:0 2px 0 var(--shadow);}
+  .island.locked{opacity:0.5; cursor:not-allowed;}
+  .island-badge{
+    width:46px; height:46px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,0.12);
+  }
+  .island-info{width:100%;}
+  .island-info h3{font-size:13.5px; line-height:1.2;}
+  .island-info p{margin:3px 0 0; font-size:10.5px; color:#6b6280; font-weight:700;}
+  .island-stars{font-size:11px; margin-top:4px; letter-spacing:1px;}
+  .wordbook-banner{
+    background:linear-gradient(135deg, var(--pink), var(--coral)); color:#fff;
+    border-radius:20px; padding:14px 16px; display:flex; align-items:center; gap:12px;
+    box-shadow:0 7px 0 rgba(0,0,0,0.15); cursor:pointer; margin-bottom:12px;
+  }
+  .wordbook-banner .count{font-family:'Baloo 2'; font-weight:800; font-size:22px;}
+
+  /* ---- Flashcard learn screen ---- */
+  .learn-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .back-btn{
+    background:var(--card); border:none; border-radius:14px; width:40px; height:40px;
+    font-size:18px; box-shadow:0 4px 0 var(--shadow); cursor:pointer; flex-shrink:0;
+  }
+  .learn-progress{font-family:'Baloo 2'; font-weight:700; color:var(--ink); font-size:14px;}
+  .flashcard-wrap{flex:1; display:flex; align-items:center; justify-content:center;}
+  .flashcard{
+    width:100%; max-width:280px; background:var(--card); border-radius:28px;
+    padding:30px 20px; text-align:center; box-shadow:0 10px 0 var(--shadow);
+    animation:cardIn .35s ease;
+  }
+  @keyframes cardIn{from{transform:scale(0.85) rotate(-2deg); opacity:0;} to{transform:scale(1) rotate(0); opacity:1;}}
+  .flashcard-emoji{font-size:80px; line-height:1;}
+  .flashcard-word{font-family:'Baloo 2'; font-weight:800; font-size:34px; color:var(--purple-dark); margin-top:10px; letter-spacing:1px;}
+  .flashcard-hear{
+    margin-top:14px; background:var(--yellow); border:none; border-radius:14px;
+    padding:10px 18px; font-family:'Baloo 2'; font-weight:700; font-size:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,0.15); cursor:pointer;
+  }
+  .learn-nav{display:flex; gap:12px; justify-content:center; margin-top:16px;}
+  .nav-btn{
+    background:var(--purple); color:#fff; border:none; border-radius:16px;
+    padding:12px 22px; font-family:'Baloo 2'; font-weight:700; font-size:15px;
+    box-shadow:0 5px 0 var(--purple-dark); cursor:pointer;
+  }
+  .nav-btn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--purple-dark);}
+  .nav-btn.ghost{background:transparent; color:var(--purple-dark); box-shadow:none;}
+
+  /* ---- Game screen ---- */
+  .game-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .progress-track{flex:1; margin:0 10px; height:12px; background:rgba(255,255,255,0.6); border-radius:999px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--green); border-radius:999px; transition:width .4s ease;}
+  .round-stars{display:flex; gap:3px; font-size:14px;}
+  .mode-tag{
+    text-align:center; font-family:'Baloo 2'; font-weight:700; font-size:12px;
+    color:var(--purple-dark); background:rgba(255,255,255,0.55); border-radius:999px;
+    padding:3px 10px; margin:0 auto 6px; width:fit-content;
+  }
+  .mascot-wrap{display:flex; justify-content:center; margin:2px 0 2px;}
+  .mascot{width:78px; height:78px; position:relative; transition:transform .25s ease;}
+  .mascot .body{
+    width:100%; height:100%; border-radius:50% 50% 46% 46%;
+    background:radial-gradient(circle at 35% 30%, #A78BFA, var(--purple));
+    box-shadow:0 6px 0 var(--shadow); position:relative;
+  }
+  .mascot .eye{width:11px; height:11px; background:#2B2140; border-radius:50%; position:absolute; top:31px;}
+  .mascot .eye.l{left:21px;} .mascot .eye.r{right:21px;}
+  .mascot .cheek{width:10px; height:6px; background:var(--coral); border-radius:50%; opacity:0.6; position:absolute; top:42px;}
+  .mascot .cheek.l{left:13px;} .mascot .cheek.r{right:13px;}
+  .mascot .mouth{width:18px; height:10px; border:3px solid #2B2140; border-top:none; border-radius:0 0 16px 16px; position:absolute; top:47px; left:50%; transform:translateX(-50%);}
+  .mascot.happy{animation:bounce .5s ease;}
+  .mascot.happy .mouth{width:22px; height:13px; border-radius:0 0 22px 22px;}
+  .mascot.sad{animation:shake .4s ease;}
+  .mascot.sad .mouth{border-radius:16px 16px 0 0; border-bottom:none; border-top:3px solid #2B2140; top:52px;}
+  @keyframes bounce{0%{transform:translateY(0);}30%{transform:translateY(-14px) scale(1.05);}60%{transform:translateY(2px);}100%{transform:translateY(0);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+
+  .prompt-card{background:var(--card); border-radius:24px; padding:16px; text-align:center; box-shadow:0 7px 0 var(--shadow); margin:6px 0;}
+  .prompt-emoji{font-size:56px; line-height:1;}
+  .word-line{font-family:'Baloo 2'; font-weight:800; font-size:32px; color:var(--ink); letter-spacing:2px; margin-top:6px;}
+  .blank{display:inline-block; width:34px; border-bottom:5px solid var(--purple); color:var(--purple); text-align:center;}
+  .speak-btn{margin-top:8px; background:var(--yellow); border:none; border-radius:14px; padding:7px 14px; font-family:'Baloo 2'; font-weight:700; font-size:13px; box-shadow:0 4px 0 rgba(0,0,0,0.15); cursor:pointer;}
+
+  .options{display:flex; gap:12px; justify-content:center; margin-top:12px; flex-wrap:wrap;}
+  .opt-btn{
+    min-width:70px; height:60px; padding:0 12px; border-radius:18px; border:none;
+    font-family:'Baloo 2'; font-weight:800; font-size:22px; color:#fff;
+    background:var(--purple); box-shadow:0 6px 0 var(--purple-dark); cursor:pointer; transition:transform .1s ease;
+  }
+  .opt-btn.letter{width:64px; min-width:64px; font-size:26px;}
+  .opt-btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--purple-dark);}
+  .opt-btn.correct{background:var(--green); box-shadow:0 6px 0 #3f9955;}
+  .opt-btn.wrong{background:var(--coral); box-shadow:0 6px 0 #d9483a;}
+  .feedback-banner{text-align:center; font-family:'Baloo 2'; font-weight:700; font-size:16px; color:var(--purple-dark); min-height:22px; margin-top:6px;}
+
+  /* ---- End screen ---- */
+  .end-screen{align-items:center; justify-content:center; text-align:center; gap:10px;}
+  .end-stars{font-size:38px;}
+  .reward-badge{
+    width:100px; height:100px; border-radius:50%; background:var(--yellow);
+    display:flex; align-items:center; justify-content:center; font-size:48px;
+    box-shadow:0 9px 0 rgba(0,0,0,0.15); margin:4px 0; animation:pop .5s ease;
+  }
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .primary-btn{
+    background:var(--purple); color:#fff; border:none; border-radius:16px;
+    padding:12px 22px; font-family:'Baloo 2'; font-weight:700; font-size:15px;
+    box-shadow:0 5px 0 var(--purple-dark); cursor:pointer; margin:3px;
+  }
+  .primary-btn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--purple-dark);}
+
+  /* ---- Word Book screen ---- */
+  .wordbook-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:6px 2px 20px;
+  }
+  .word-tile{
+    background:var(--card); border-radius:18px; padding:12px 6px; text-align:center;
+    box-shadow:0 6px 0 var(--shadow); cursor:pointer; transition:transform .1s ease;
+  }
+  .word-tile:active{transform:translateY(3px); box-shadow:0 3px 0 var(--shadow);}
+  .word-tile .we{font-size:32px;}
+  .word-tile .ww{font-family:'Baloo 2'; font-weight:700; font-size:13px; color:var(--ink); margin-top:2px;}
+  .empty-book{text-align:center; margin-top:40px; color:#6b6280; font-weight:700; padding:0 20px;}
+
+  /* ---- Parent dashboard ---- */
+  .summary-row{display:flex; gap:10px; margin:8px 2px 14px;}
+  .summary-card{
+    flex:1; background:var(--card); border-radius:18px; padding:12px 10px; text-align:center;
+    box-shadow:0 6px 0 var(--shadow);
+  }
+  .summary-card .num{font-family:'Baloo 2'; font-weight:800; font-size:24px; color:var(--purple-dark);}
+  .summary-card .lbl{font-size:11px; font-weight:700; color:#6b6280; margin-top:2px;}
+  .cat-progress-row{
+    background:var(--card); border-radius:18px; padding:12px 14px; margin-bottom:10px;
+    box-shadow:0 5px 0 var(--shadow);
+  }
+  .cat-progress-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .cat-progress-top .cname{font-family:'Baloo 2'; font-weight:700; font-size:14px; color:var(--ink); display:flex; align-items:center; gap:6px;}
+  .cat-progress-top .cscore{font-size:12px; font-weight:800; color:var(--purple-dark);}
+  .cat-bar-track{height:10px; background:rgba(0,0,0,0.08); border-radius:999px; overflow:hidden;}
+  .cat-bar-fill{height:100%; border-radius:999px; transition:width .4s ease;}
+  .parent-tip{
+    background:rgba(255,255,255,0.6); border-radius:16px; padding:10px 14px; margin-top:6px;
+    font-size:12.5px; font-weight:700; color:var(--ink); line-height:1.5;
+  }
+
+  .word-line.sentence-mode{font-size:19px; letter-spacing:0; line-height:1.5; font-weight:700;}
+  .results-list{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px; max-width:340px;}
+  .result-chip{
+    background:var(--card); border-radius:12px; padding:5px 9px; font-size:12px; font-weight:700;
+    box-shadow:0 3px 0 var(--shadow); display:inline-flex; align-items:center; gap:3px;
+  }
+
+  .confetti-piece{position:fixed; top:-10px; width:9px; height:9px; border-radius:2px; z-index:50; animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg); opacity:0.9;}}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- MAP SCREEN -->
+  <div class="screen active" id="screen-map">
+    <div class="map-header">
+      <h1 style="font-size:20px;">🗺️ Words Study for Kids</h1>
+      <div class="header-right">
+        <div class="pill-btn">⭐ <span id="totalStars">0</span></div>
+        <div class="pill-btn" onclick="openParentDashboard()">👪</div>
+      </div>
+    </div>
+    <div class="mascot-intro">
+      <span style="font-size:22px;">👋</span>
+      <span>Hi! I'm Bubbles. Learn new words, then play to earn stars!</span>
+    </div>
+    <div class="wordbook-banner" onclick="openWordBook()">
+      <span style="font-size:30px;">📖</span>
+      <div>
+        <div style="font-family:'Baloo 2'; font-weight:800; font-size:15px;">My Word Book</div>
+        <div style="font-size:12px; font-weight:700;">Tap to review words you've learned</div>
+      </div>
+      <div class="count" id="wordbookCount" style="margin-left:auto;">0</div>
+    </div>
+    <div class="islands" id="islandsList"></div>
+  </div>
+
+  <!-- FLASHCARD LEARN SCREEN -->
+  <div class="screen" id="screen-learn">
+    <div class="learn-top">
+      <button class="back-btn" onclick="goToMap()">←</button>
+      <div class="learn-progress" id="learnProgress">Card 1 / 6</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-emoji" id="fcEmoji">🐱</div>
+        <div class="flashcard-word" id="fcWord">CAT</div>
+        <button class="flashcard-hear" onclick="speakCurrentFlash()">🔊 Hear it</button>
+      </div>
+    </div>
+    <div class="learn-nav">
+      <button class="nav-btn ghost" id="prevCardBtn" onclick="prevFlashcard()">← Back</button>
+      <button class="nav-btn" id="nextCardBtn" onclick="nextFlashcard()">Next →</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="screen-game">
+    <div class="game-top">
+      <button class="back-btn" onclick="goToMap()">←</button>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="round-stars" id="roundStars"></div>
+    </div>
+    <div class="mode-tag" id="modeTag">Letter Sounds</div>
+    <div class="mascot-wrap">
+      <div class="mascot" id="mascot">
+        <div class="body">
+          <div class="eye l"></div><div class="eye r"></div>
+          <div class="cheek l"></div><div class="cheek r"></div>
+          <div class="mouth"></div>
+        </div>
+      </div>
+    </div>
+    <div class="prompt-card">
+      <div class="prompt-emoji" id="promptEmoji">🐱</div>
+      <div class="word-line" id="wordLine">_AT</div>
+      <button class="speak-btn" onclick="speakWord()">🔊 Hear it</button>
+    </div>
+    <div class="options" id="options"></div>
+    <div class="feedback-banner" id="feedback"></div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="screen end-screen" id="screen-end">
+    <h1 style="font-size:26px;">Great job! 🎉</h1>
+    <div class="reward-badge" id="rewardBadge">🏆</div>
+    <div class="end-stars" id="endStars">⭐⭐⭐⭐⭐⭐</div>
+    <p style="font-weight:800; color:var(--ink); font-size:14px;" id="endMsg">You finished!</p>
+    <div id="resultsBreakdown"></div>
+    <div>
+      <button class="primary-btn" onclick="goToMap()">Back to Map</button>
+      <button class="primary-btn" style="background:var(--coral); box-shadow:0 5px 0 #d9483a;" id="replayBtn">Play Again</button>
+    </div>
+  </div>
+
+  <!-- WORD BOOK SCREEN -->
+  <div class="screen" id="screen-wordbook">
+    <div class="learn-top">
+      <button class="back-btn" onclick="goToMap()">←</button>
+      <div class="learn-progress">📖 My Word Book</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div id="wordbookContent"></div>
+  </div>
+
+  <!-- PARENT DASHBOARD SCREEN -->
+  <div class="screen" id="screen-parent">
+    <div class="learn-top">
+      <button class="back-btn" onclick="goToMap()">←</button>
+      <div class="learn-progress">👪 Parent Dashboard</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div id="parentContent"></div>
+  </div>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+const CATEGORIES = [
+  { id:'animals', name:'Animal Island', icon:'🐾', color:'#FFD166', type:'word',
+    words:[
+      {word:'CAT', emoji:'🐱'}, {word:'DOG', emoji:'🐶'}, {word:'FISH', emoji:'🐟'},
+      {word:'BIRD', emoji:'🐦'}, {word:'FROG', emoji:'🐸'}, {word:'LION', emoji:'🦁'},
+      {word:'OWL', emoji:'🦉'}, {word:'DUCK', emoji:'🦆'}
+    ]},
+  { id:'food', name:'Food Forest', icon:'🍎', color:'#FF8FB3', type:'word',
+    words:[
+      {word:'APPLE', emoji:'🍎'}, {word:'BANANA', emoji:'🍌'}, {word:'BREAD', emoji:'🍞'},
+      {word:'MILK', emoji:'🥛'}, {word:'EGG', emoji:'🥚'}, {word:'CAKE', emoji:'🍰'},
+      {word:'RICE', emoji:'🍚'}, {word:'JUICE', emoji:'🧃'}
+    ]},
+  { id:'shapes', name:'Shape Shore', icon:'⭐', color:'#63C77B', type:'word',
+    words:[
+      {word:'STAR', emoji:'⭐'}, {word:'HEART', emoji:'❤️'}, {word:'CIRCLE', emoji:'⚪'},
+      {word:'MOON', emoji:'🌙'}, {word:'SUN', emoji:'☀️'}, {word:'CLOUD', emoji:'☁️'},
+      {word:'TRIANGLE', emoji:'🔺'}, {word:'SQUARE', emoji:'⬛'}
+    ]},
+  { id:'family', name:'Family Farm', icon:'👨‍👩‍👧', color:'#7C5CFC', type:'word',
+    words:[
+      {word:'MOM', emoji:'👩'}, {word:'DAD', emoji:'👨'}, {word:'BABY', emoji:'👶'},
+      {word:'SISTER', emoji:'👧'}, {word:'BROTHER', emoji:'👦'}, {word:'FAMILY', emoji:'👨‍👩‍👧'},
+      {word:'GRANDMA', emoji:'👵'}, {word:'GRANDPA', emoji:'👴'}
+    ]},
+  { id:'numbers', name:'Number Nook', icon:'🔢', color:'#FF6F61', type:'word',
+    words:[
+      {word:'ONE', emoji:'1️⃣'}, {word:'TWO', emoji:'2️⃣'}, {word:'THREE', emoji:'3️⃣'},
+      {word:'FOUR', emoji:'4️⃣'}, {word:'FIVE', emoji:'5️⃣'}, {word:'SIX', emoji:'6️⃣'},
+      {word:'SEVEN', emoji:'7️⃣'}, {word:'EIGHT', emoji:'8️⃣'}
+    ]},
+  { id:'colors', name:'Color Cove', icon:'🎨', color:'#FF6F61', type:'word',
+    words:[
+      {word:'RED', emoji:'🟥'}, {word:'BLUE', emoji:'🟦'}, {word:'GREEN', emoji:'🟩'},
+      {word:'YELLOW', emoji:'🟨'}, {word:'PURPLE', emoji:'🟪'}, {word:'ORANGE', emoji:'🟧'},
+      {word:'PINK', emoji:'🌸'}, {word:'BLACK', emoji:'⬛'}, {word:'WHITE', emoji:'⬜'},
+      {word:'BROWN', emoji:'🟫'}
+    ]},
+  { id:'places', name:'Place Path', icon:'🏡', color:'#7C5CFC', type:'word',
+    words:[
+      {word:'HOME', emoji:'🏠'}, {word:'SCHOOL', emoji:'🏫'}, {word:'PARK', emoji:'🌳'},
+      {word:'ZOO', emoji:'🦒'}, {word:'BEACH', emoji:'🏖️'}, {word:'FARM', emoji:'🚜'},
+      {word:'STORE', emoji:'🏪'}, {word:'HOSPITAL', emoji:'🏥'}, {word:'LIBRARY', emoji:'📚'},
+      {word:'PLAYGROUND', emoji:'🛝'}
+    ]},
+  { id:'weather', name:'Weather Woods', icon:'⛅', color:'#FFD166', type:'word',
+    words:[
+      {word:'SUNNY', emoji:'☀️'}, {word:'RAINY', emoji:'🌧️'}, {word:'CLOUDY', emoji:'☁️'},
+      {word:'SNOWY', emoji:'❄️'}, {word:'WINDY', emoji:'🌬️'}, {word:'STORMY', emoji:'⛈️'},
+      {word:'HOT', emoji:'🥵'}, {word:'COLD', emoji:'🥶'}, {word:'RAINBOW', emoji:'🌈'},
+      {word:'FOGGY', emoji:'🌫️'}
+    ]},
+  { id:'sentences', name:'Sentence Street', icon:'💬', color:'#8FD8FF', type:'sentence',
+    words:[
+      { word:'CAT', emoji:'🐱', sentence:'I see a ___.', options:['CAT','DOG','SUN'] },
+      { word:'APPLE', emoji:'🍎', sentence:'I like to eat ___.', options:['APPLE','MILK','STAR'] },
+      { word:'SUN', emoji:'☀️', sentence:'The ___ is hot.', options:['SUN','MOON','CLOUD'] },
+      { word:'MOM', emoji:'👩', sentence:'This is my ___.', options:['MOM','DAD','BABY'] },
+      { word:'DOG', emoji:'🐶', sentence:'My ___ can run fast.', options:['DOG','FISH','BIRD'] },
+      { word:'STAR', emoji:'⭐', sentence:'I see a ___ in the sky.', options:['STAR','HEART','CIRCLE'] },
+      { word:'BABY', emoji:'👶', sentence:'The ___ is sleeping.', options:['BABY','GRANDPA','SISTER'] },
+      { word:'THREE', emoji:'3️⃣', sentence:'I have ___ apples.', options:['THREE','SEVEN','ONE'] }
+    ]},
+];
+
+/* ================= STATE (in-memory only, resets on reload) ================= */
+let state = {
+  totalStars: 0,
+  unlockedCount: 99,         // all categories free to play
+  categoryStars: {},         // id -> stars earned (best run)
+  learnedWords: {},          // "CAT" -> true, once seen in flashcards
+  currentCategory: null,
+  flashIndex: 0,
+  quizOrder: [],
+  quizIndex: 0,
+  starsThisRun: 0,
+  roundResults: [],          // {word, correct} per quiz round, this run
+  firstTryFlag: true,
+};
+
+/* ================= NAV ================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goToMap(){
+  renderMap();
+  showScreen('screen-map');
+}
+
+/* ================= MAP RENDER ================= */
+function renderMap(){
+  document.getElementById('totalStars').textContent = state.totalStars;
+  document.getElementById('wordbookCount').textContent = Object.keys(state.learnedWords).length;
+
+  const list = document.getElementById('islandsList');
+  list.innerHTML = "";
+  CATEGORIES.forEach((cat) => {
+    const stars = state.categoryStars[cat.id] || 0;
+    const div = document.createElement('div');
+    div.className = 'island';
+    div.innerHTML = `
+      <div class="island-badge" style="background:${cat.color};">${cat.icon}</div>
+      <div class="island-info">
+        <h3>${cat.name}</h3>
+        <p>${cat.words.length} words${cat.type === 'sentence' ? ' · short sentences' : ' to learn'}</p>
+        <div class="island-stars">${'⭐'.repeat(stars) + '☆'.repeat(cat.words.length - stars)}</div>
+      </div>
+    `;
+    div.onclick = () => openCategory(cat.id);
+    list.appendChild(div);
+  });
+}
+
+/* ================= FLASHCARD LEARN PHASE ================= */
+function openCategory(id){
+  state.currentCategory = CATEGORIES.find(c => c.id === id);
+  state.flashIndex = 0;
+  showScreen('screen-learn');
+  renderFlashcard();
+}
+
+function renderFlashcard(){
+  const cat = state.currentCategory;
+  const w = cat.words[state.flashIndex];
+  document.getElementById('fcEmoji').textContent = w.emoji;
+  document.getElementById('fcWord').textContent = cat.type === 'sentence'
+    ? w.sentence.replace('___', w.word)
+    : w.word;
+  document.getElementById('fcWord').style.fontSize = cat.type === 'sentence' ? '22px' : '34px';
+  document.getElementById('learnProgress').textContent = `Card ${state.flashIndex + 1} / ${cat.words.length}`;
+  document.getElementById('prevCardBtn').style.visibility = state.flashIndex === 0 ? 'hidden' : 'visible';
+  document.getElementById('nextCardBtn').textContent = state.flashIndex === cat.words.length - 1 ? "Start Quiz →" : "Next →";
+
+  // mark as learned (seen) immediately -> adds to Word Book
+  state.learnedWords[w.word] = { emoji: w.emoji, categoryId: cat.id };
+
+  // re-trigger card animation
+  const card = document.getElementById('flashcard');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = null;
+
+  speakCurrentFlash();
+}
+
+function speakCurrentFlash(){
+  const cat = state.currentCategory;
+  const w = cat.words[state.flashIndex];
+  speak(cat.type === 'sentence' ? w.sentence.replace('___', w.word) : w.word);
+}
+
+function nextFlashcard(){
+  const cat = state.currentCategory;
+  if(state.flashIndex < cat.words.length - 1){
+    state.flashIndex++;
+    renderFlashcard();
+  } else {
+    startQuiz(cat.id);
+  }
+}
+function prevFlashcard(){
+  if(state.flashIndex > 0){
+    state.flashIndex--;
+    renderFlashcard();
+  }
+}
+
+/* ================= QUIZ ================= */
+function buildQuizRounds(cat){
+  const rounds = cat.words.map(w => ({ ...w, source: cat.id }));
+
+  if(cat.type === 'sentence'){
+    return shuffle(rounds);
+  }
+
+  // Memory challenge: sprinkle in up to 2 words from other word-type categories already learned
+  const priorWords = [];
+  CATEGORIES.filter(c => c.id !== cat.id && c.type === 'word').forEach(pc => {
+    pc.words.forEach(w => { if(state.learnedWords[w.word]) priorWords.push({ ...w, source: pc.id }); });
+  });
+  shuffle(priorWords);
+  rounds.push(...priorWords.slice(0, 2));
+
+  return shuffle(rounds);
+}
+
+function startQuiz(catId){
+  const cat = CATEGORIES.find(c => c.id === catId);
+  state.currentCategory = cat;
+  state.quizOrder = buildQuizRounds(cat);
+  state.quizIndex = 0;
+  state.starsThisRun = 0;
+  state.roundResults = [];
+  document.getElementById('roundStars').innerHTML = "";
+  showScreen('screen-game');
+  loadRound();
+}
+
+function loadRound(){
+  if(state.quizIndex >= state.quizOrder.length){
+    finishQuiz();
+    return;
+  }
+  const r = state.quizOrder[state.quizIndex];
+  const pct = (state.quizIndex / state.quizOrder.length) * 100;
+  document.getElementById('progressFill').style.width = pct + "%";
+  document.getElementById('feedback').textContent = "";
+  document.getElementById('promptEmoji').textContent = r.emoji;
+  document.getElementById('wordLine').classList.remove('sentence-mode');
+  setMascot('neutral');
+  state.firstTryFlag = true;
+
+  const cat = state.currentCategory;
+  if(cat.type === 'sentence'){
+    document.getElementById('modeTag').textContent = "💬 Short Sentences";
+    setupSentenceRound(r);
+    return;
+  }
+
+  // Alternate game mode: even index -> letter-sound match, odd -> whole-word match
+  const mode = state.quizIndex % 2 === 0 ? 'letter' : 'word';
+  document.getElementById('modeTag').textContent = mode === 'letter' ? "🔤 Letter Sounds" : "📝 Word Match";
+
+  if(mode === 'letter'){
+    setupLetterRound(r);
+  } else {
+    setupWordRound(r);
+  }
+}
+
+function setupSentenceRound(r){
+  document.getElementById('wordLine').classList.add('sentence-mode');
+  const parts = r.sentence.split('___');
+  document.getElementById('wordLine').innerHTML = parts[0] + '<span class="blank">&nbsp;</span>' + parts[1];
+
+  const opts = shuffle([...r.options]);
+  const wrap = document.getElementById('options');
+  wrap.innerHTML = "";
+  opts.forEach(word => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.style.fontSize = '14px';
+    btn.textContent = word;
+    btn.onclick = () => checkAnswer(word, r.word, btn, r, 'sentence');
+    wrap.appendChild(btn);
+  });
+}
+
+function setupLetterRound(r){
+  const rest = r.word.slice(1);
+  document.getElementById('wordLine').innerHTML = '<span class="blank">&nbsp;</span>' + rest;
+
+  const correctLetter = r.word[0];
+  let optionLetters = new Set([correctLetter]);
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  while(optionLetters.size < 3){
+    optionLetters.add(alphabet[Math.floor(Math.random()*alphabet.length)]);
+  }
+  const opts = shuffle([...optionLetters]);
+
+  const wrap = document.getElementById('options');
+  wrap.innerHTML = "";
+  opts.forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn letter';
+    btn.textContent = letter;
+    btn.onclick = () => checkAnswer(letter, correctLetter, btn, r, 'letter');
+    wrap.appendChild(btn);
+  });
+}
+
+function setupWordRound(r){
+  document.getElementById('wordLine').innerHTML = "&nbsp;❓&nbsp;";
+
+  // build 2 distractor words (from same category or similar length)
+  const pool = CATEGORIES.flatMap(c => c.words.map(w => w.word)).filter(w => w !== r.word);
+  shuffle(pool);
+  const distractors = pool.slice(0, 2);
+  const opts = shuffle([r.word, ...distractors]);
+
+  const wrap = document.getElementById('options');
+  wrap.innerHTML = "";
+  opts.forEach(word => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.style.fontSize = '15px';
+    btn.textContent = word;
+    btn.onclick = () => checkAnswer(word, r.word, btn, r, 'word');
+    wrap.appendChild(btn);
+  });
+}
+
+function checkAnswer(chosen, correct, btnEl, roundData, mode){
+  const buttons = document.querySelectorAll('.opt-btn');
+  buttons.forEach(b => b.onclick = null);
+
+  if(chosen === correct){
+    btnEl.classList.add('correct');
+    document.getElementById('feedback').textContent = "Yes! Well done! 🎉";
+    document.getElementById('feedback').style.color = "var(--green)";
+    if(mode === 'letter'){
+      document.getElementById('wordLine').innerHTML = correct + roundData.word.slice(1);
+    } else if(mode === 'word'){
+      document.getElementById('wordLine').textContent = correct;
+    } else if(mode === 'sentence'){
+      document.getElementById('wordLine').textContent = roundData.sentence.replace('___', correct);
+    }
+    setMascot('happy');
+    playTone(true);
+    burstConfetti();
+    state.starsThisRun++;
+    document.getElementById('roundStars').innerHTML = "⭐".repeat(state.starsThisRun);
+    speak(mode === 'sentence' ? roundData.sentence.replace('___', correct) : roundData.word);
+    state.roundResults.push({ word: roundData.word, emoji: roundData.emoji, correct: state.firstTryFlag });
+    setTimeout(() => { state.quizIndex++; loadRound(); }, 1100);
+  } else {
+    btnEl.classList.add('wrong');
+    document.getElementById('feedback').textContent = "Not quite — try again!";
+    document.getElementById('feedback').style.color = "var(--coral)";
+    setMascot('sad');
+    playTone(false);
+    state.firstTryFlag = false;
+    setTimeout(() => {
+      btnEl.classList.remove('wrong');
+      buttons.forEach(b => b.onclick = () => checkAnswer(b.textContent, correct, b, roundData, mode));
+      setMascot('neutral');
+    }, 700);
+  }
+}
+
+function finishQuiz(){
+  const cat = state.currentCategory;
+  const best = Math.max(state.categoryStars[cat.id] || 0, state.starsThisRun);
+  state.categoryStars[cat.id] = Math.min(best, state.quizOrder.length);
+  state.totalStars = Object.values(state.categoryStars).reduce((a,b) => a+b, 0);
+
+  const totalPossible = state.quizOrder.length;
+  document.getElementById('endStars').textContent = "⭐".repeat(state.starsThisRun) + "☆".repeat(Math.max(0, totalPossible - state.starsThisRun));
+  document.getElementById('endMsg').textContent =
+    state.starsThisRun === totalPossible
+      ? `Perfect! You mastered ${cat.name}!`
+      : `You finished ${cat.name}! Here's how it went:`;
+  document.getElementById('replayBtn').onclick = () => startQuiz(cat.id);
+
+  const firstTryCount = state.roundResults.filter(r => r.correct).length;
+  let resultsHtml = `<div class="results-list">`;
+  state.roundResults.forEach(r => {
+    resultsHtml += `<div class="result-chip">${r.emoji} ${r.word} ${r.correct ? '✅' : '🔁'}</div>`;
+  });
+  resultsHtml += `</div>
+    <p style="font-size:12px; font-weight:700; color:#6b6280; margin-top:8px;">
+      ✅ = got it right away &nbsp; 🔁 = needed a second try &nbsp;·&nbsp; ${firstTryCount}/${totalPossible} on the first try
+    </p>`;
+  document.getElementById('resultsBreakdown').innerHTML = resultsHtml;
+
+  showScreen('screen-end');
+  burstConfetti(30);
+}
+
+function setMascot(mood){
+  const m = document.getElementById('mascot');
+  m.classList.remove('happy','sad');
+  if(mood === 'happy') m.classList.add('happy');
+  if(mood === 'sad') m.classList.add('sad');
+}
+
+/* ================= WORD BOOK ================= */
+function openWordBook(){
+  const content = document.getElementById('wordbookContent');
+  const words = Object.entries(state.learnedWords);
+  if(words.length === 0){
+    content.innerHTML = `<div class="empty-book">📭 No words yet! Visit an island and learn some words first.</div>`;
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'wordbook-grid';
+    words.forEach(([word, info]) => {
+      const tile = document.createElement('div');
+      tile.className = 'word-tile';
+      tile.innerHTML = `<div class="we">${info.emoji}</div><div class="ww">${word}</div>`;
+      tile.onclick = () => speak(word);
+      grid.appendChild(tile);
+    });
+    content.innerHTML = "";
+    content.appendChild(grid);
+  }
+  showScreen('screen-wordbook');
+}
+
+/* ================= PARENT DASHBOARD ================= */
+function openParentDashboard(){
+  const content = document.getElementById('parentContent');
+  const wordsLearned = Object.keys(state.learnedWords).length;
+  const totalWords = CATEGORIES.reduce((sum, c) => sum + c.words.length, 0);
+  const islandsDone = CATEGORIES.filter(c => (state.categoryStars[c.id] || 0) === c.words.length).length;
+
+  let html = `
+    <div class="summary-row">
+      <div class="summary-card"><div class="num">${wordsLearned}/${totalWords}</div><div class="lbl">Words Seen</div></div>
+      <div class="summary-card"><div class="num">${state.totalStars}</div><div class="lbl">Stars Earned</div></div>
+      <div class="summary-card"><div class="num">${islandsDone}/${CATEGORIES.length}</div><div class="lbl">Islands Mastered</div></div>
+    </div>
+  `;
+
+  CATEGORIES.forEach((cat, idx) => {
+    const locked = idx >= state.unlockedCount;
+    const stars = state.categoryStars[cat.id] || 0;
+    const pct = locked ? 0 : Math.round((stars / cat.words.length) * 100);
+    html += `
+      <div class="cat-progress-row">
+        <div class="cat-progress-top">
+          <div class="cname">${cat.icon} ${cat.name}</div>
+          <div class="cscore">${locked ? 'Not started' : stars + '/' + cat.words.length + ' words'}</div>
+        </div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width:${pct}%; background:${cat.color};"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="parent-tip">
+      💡 Tip: Words appear in "My Word Book" as soon as they're introduced in the flashcards, even before your child has mastered them in the quiz. Revisiting the Word Book together for a minute a day is a great way to reinforce recall.
+    </div>
+  `;
+
+  content.innerHTML = html;
+  showScreen('screen-parent');
+}
+
+/* ================= UTIL ================= */
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function speak(text){
+  if('speechSynthesis' in window){
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.75;
+    utter.pitch = 1.1;
+    speechSynthesis.speak(utter);
+  }
+}
+function speakWord(){
+  const r = state.quizOrder[state.quizIndex];
+  const cat = state.currentCategory;
+  speak(cat.type === 'sentence' ? r.sentence.replace('___', '') : r.word);
+}
+let audioCtx;
+function playTone(success){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine';
+    if(success){
+      o.frequency.setValueAtTime(523, audioCtx.currentTime);
+      o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.12);
+    } else {
+      o.frequency.setValueAtTime(220, audioCtx.currentTime);
+    }
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    o.start(); o.stop(audioCtx.currentTime + 0.35);
+  }catch(e){}
+}
+function burstConfetti(count = 14){
+  const colors = ['#FF6F61','#FFD166','#7C5CFC','#63C77B','#8FD8FF','#FF8FB3'];
+  for(let i = 0; i < count; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDuration = (1.4 + Math.random()*1.2) + 's';
+    piece.style.opacity = Math.random() * 0.6 + 0.4;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
+  }
+}
+
+/* ================= INIT ================= */
+renderMap();
+</script>
+</body>
+</html>
